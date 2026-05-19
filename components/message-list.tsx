@@ -29,21 +29,45 @@ export function MessageList({ messages, isLoading }: Props) {
       {messages.map((msg, i) => {
         const isStreamingThis =
           isLoading && i === messages.length - 1 && msg.role === 'assistant'
+
         return (
           <div
             key={i}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap break-words leading-relaxed ${
+              className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm break-words leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-800'
               }`}
             >
-              {msg.content}
-              {isStreamingThis && (
-                <span className="inline-block w-0.5 h-3.5 bg-gray-500 ml-0.5 align-middle animate-pulse" />
+              {typeof msg.content === 'string' ? (
+                <>
+                  <span className="whitespace-pre-wrap">{msg.content}</span>
+                  {isStreamingThis && (
+                    <span className="inline-block w-0.5 h-3.5 bg-gray-500 ml-0.5 align-middle animate-pulse" />
+                  )}
+                </>
+              ) : (
+                <div className="space-y-2">
+                  {msg.content.map((part, j) =>
+                    part.type === 'image' ? (
+                      <img
+                        key={j}
+                        src={`data:${part.mediaType};base64,${part.data}`}
+                        alt="添付画像"
+                        className="rounded-lg max-w-full block"
+                      />
+                    ) : (
+                      part.text && (
+                        <p key={j} className="whitespace-pre-wrap">
+                          {part.text}
+                        </p>
+                      )
+                    )
+                  )}
+                </div>
               )}
             </div>
           </div>

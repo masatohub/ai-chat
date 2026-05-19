@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Message } from '@/types'
+import type { ImagePart, Message } from '@/types'
 import { MessageList } from './message-list'
 import { MessageInput } from './message-input'
 
@@ -9,8 +9,15 @@ export function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const sendMessage = async (text: string) => {
-    const userMessage: Message = { role: 'user', content: text }
+  const sendMessage = async (text: string, image?: ImagePart) => {
+    const content: Message['content'] = image
+      ? [
+          { type: 'image', mediaType: image.mediaType, data: image.data },
+          ...(text ? [{ type: 'text' as const, text }] : []),
+        ]
+      : text
+
+    const userMessage: Message = { role: 'user', content }
     const nextMessages: Message[] = [...messages, userMessage]
     setMessages(nextMessages)
     setIsLoading(true)
@@ -55,9 +62,10 @@ export function ChatWindow() {
             if (typeof parsed === 'string') {
               setMessages(prev => {
                 const last = prev[prev.length - 1]
+                const prevContent = typeof last.content === 'string' ? last.content : ''
                 return [
                   ...prev.slice(0, -1),
-                  { ...last, content: last.content + parsed },
+                  { ...last, content: prevContent + parsed },
                 ]
               })
             } else if (parsed?.error) {
@@ -74,7 +82,7 @@ export function ChatWindow() {
           }
         }
       }
-    } catch (err) {
+    } catch {
       setMessages(prev => [
         ...prev,
         { role: 'assistant', content: 'ネットワークエラーが発生しました。' },
